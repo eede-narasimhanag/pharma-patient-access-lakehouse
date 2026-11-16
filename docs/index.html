@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A portfolio case study for a synthetic pharma patient-access and commercial analytics lakehouse built with Python, SQL, Databricks, and Delta Lake.">
+  <meta name="theme-color" content="#101c2b">
+  <title>Patient Access Lakehouse | Analytics Engineering Case Study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #122235;
+      --muted: #536477;
+      --navy: #101c2b;
+      --navy-soft: #182b3d;
+      --paper: #f5f7f4;
+      --white: #fff;
+      --line: #dce4e1;
+      --green: #92d6a5;
+      --green-dark: #226b4a;
+      --mint: #e5f3e8;
+      --gold: #efbd67;
+      --blue: #c9e6f4;
+      --radius: 18px;
+      --shadow: 0 18px 55px rgba(13, 30, 45, .10);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.65 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    a { color: inherit; }
+
+    a:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
+
+    img { display: block; max-width: 100%; }
+
+    .wrap { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
+
+    .skip-link {
+      position: absolute;
+      top: -60px;
+      left: 16px;
+      z-index: 5;
+      padding: 10px 14px;
+      background: var(--white);
+      color: var(--ink);
+    }
+
+    .skip-link:focus { top: 12px; }
+
+    .site-header {
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 2;
+      color: var(--white);
+    }
+
+    .nav {
+      display: flex;
+      min-height: 78px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 1px solid rgba(255,255,255,.14);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--white);
+      font-size: .9rem;
+      font-weight: 750;
+      letter-spacing: .02em;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 1px solid rgba(146,214,165,.55);
+      border-radius: 10px;
+      color: var(--green);
+      font-size: .72rem;
+      letter-spacing: .08em;
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 25px; }
+    .nav-links a { color: #d6e0e7; font-size: .86rem; text-decoration: none; }
+    .nav-links a:hover { color: var(--green); }
+
+    .button {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 17px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: var(--green);
+      color: #10251c;
+      font-size: .9rem;
+      font-weight: 750;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .button:hover { transform: translateY(-2px); background: #b0e5bd; }
+    .button-outline { border-color: rgba(255,255,255,.38); background: transparent; color: var(--white); }
+    .button-outline:hover { background: rgba(255,255,255,.08); }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 142px 0 80px;
+      background:
+        radial-gradient(ellipse at 82% 22%, rgba(68,133,102,.28), transparent 34%),
+        linear-gradient(125deg, var(--navy), #152c3b 68%, #183a42);
+      color: var(--white);
+    }
+
+    .hero::after {
+      position: absolute;
+      right: -155px;
+      bottom: -315px;
+      width: 620px;
+      height: 620px;
+      border: 1px solid rgba(146,214,165,.15);
+      border-radius: 50%;
+      box-shadow: 0 0 0 46px rgba(146,214,165,.035), 0 0 0 92px rgba(146,214,165,.025);
+      content: "";
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(270px, .75fr);
+      align-items: center;
+      gap: 72px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 18px;
+      color: var(--green);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 22px;
+      height: 2px;
+      background: currentColor;
+      content: "";
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 760px;
+      margin-bottom: 22px;
+      font-size: clamp(2.6rem, 5.2vw, 4.65rem);
+      font-weight: 680;
+      letter-spacing: -.055em;
+      line-height: 1.04;
+    }
+
+    h1 span { color: var(--green); }
+
+    .hero-copy {
+      max-width: 650px;
+      margin-bottom: 28px;
+      color: #d0dbe1;
+      font-size: 1.1rem;
+    }
+
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+    .hero-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 24px;
+      color: #c4d2da;
+      font-size: .82rem;
+    }
+
+    .note-dot {
+      flex: 0 0 9px;
+      width: 9px;
+      height: 9px;
+      margin-top: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(146,214,165,.12);
+    }
+
+    .hero-card {
+      padding: 25px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 24px 70px rgba(0,0,0,.15);
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-card-label {
+      margin-bottom: 18px;
+      color: #a9bac5;
+      font-size: .72rem;
+      font-weight: 750;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .hero-stat {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 15px 0;
+      border-top: 1px solid rgba(255,255,255,.13);
+    }
+
+    .hero-stat strong { color: var(--white); font-size: 1.55rem; letter-spacing: -.04em; }
+    .hero-stat span { color: #c0ced6; font-size: .82rem; text-align: right; }
+
+    .trust-strip {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      margin-top: 64px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 13px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .trust-item { padding: 17px 20px; background: rgba(16,28,43,.56); }
+    .trust-item strong { display: block; color: var(--white); font-size: 1.22rem; }
+    .trust-item span { color: #b8c6ce; font-size: .76rem; }
+
+    main section { padding: 90px 0; }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: minmax(0, .8fr) minmax(280px, .65fr);
+      align-items: end;
+      gap: 50px;
+      margin-bottom: 38px;
+    }
+
+    .section-heading h2 {
+      max-width: 650px;
+      margin-bottom: 0;
+      font-size: clamp(2rem, 3.8vw, 3.1rem);
+      letter-spacing: -.045em;
+      line-height: 1.12;
+    }
+
+    .section-heading p { margin-bottom: 4px; color: var(--muted); }
+    .section-heading .eyebrow { grid-column: 1 / -1; margin-bottom: -29px; }
+
+    .problem-section { background: var(--white); }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .content-card {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--white);
+    }
+
+    .content-card h3 { margin-bottom: 10px; font-size: 1.18rem; letter-spacing: -.02em; }
+    .content-card p { margin-bottom: 0; color: var(--muted); }
+
+    .card-label {
+      display: block;
+      margin-bottom: 16px;
+      color: var(--green-dark);
+      font-size: .73rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .source-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .source-pill {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f8faf8;
+      color: #34495a;
+      font-size: .78rem;
+      font-weight: 650;
+    }
+
+    .approach-section { background: var(--paper); }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .flow-card {
+      position: relative;
+      min-height: 220px;
+      padding: 24px 21px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--white);
+    }
+
+    .flow-card:not(:last-child)::after {
+      position: absolute;
+      top: 34px;
+      right: -15px;
+      z-index: 1;
+      width: 15px;
+      height: 2px;
+      background: #9cafa6;
+      content: "";
+    }
+
+    .step {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 20px;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--mint);
+      color: var(--green-dark);
+      font-size: .78rem;
+      font-weight: 800;
+    }
+
+    .flow-card h3 { margin-bottom: 8px; font-size: 1.04rem; }
+    .flow-card p { margin-bottom: 0; color: var(--muted); font-size: .88rem; }
+
+    .grain-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
+      margin-top: 20px;
+      padding: 17px 20px;
+      border-left: 3px solid var(--green-dark);
+      border-radius: 0 10px 10px 0;
+      background: #eaf3ec;
+      color: #315343;
+      font-size: .88rem;
+    }
+
+    .grain-note strong { color: #173c2a; }
+
+    .results-section { background: var(--navy); color: var(--white); }
+
+    .results-section .section-heading p { color: #bfccd3; }
+    .results-section .eyebrow { color: var(--green); }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 34px;
+    }
+
+    .result-card {
+      padding: 22px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,.055);
+    }
+
+    .result-card strong { display: block; margin-bottom: 3px; color: var(--green); font-size: 1.65rem; letter-spacing: -.04em; }
+    .result-card span { color: #c6d1d8; font-size: .82rem; }
+
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+    .chart-card {
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 15px;
+      background: #172433;
+    }
+
+    .chart-card img { width: 100%; aspect-ratio: 2.15 / 1; object-fit: cover; background: #182330; }
+    .chart-caption { padding: 15px 18px; color: #e6edf0; font-size: .86rem; }
+    .chart-caption span { display: block; margin-top: 3px; color: #aebdc6; font-size: .75rem; }
+
+    .quality-section { background: var(--white); }
+
+    .quality-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+    .quality-card {
+      padding: 25px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fbfcfb;
+    }
+
+    .quality-card h3 { margin-bottom: 13px; font-size: 1.08rem; }
+    .quality-card ul { margin: 0; padding-left: 19px; color: var(--muted); }
+    .quality-card li + li { margin-top: 6px; }
+
+    .review-callout {
+      grid-column: 1 / -1;
+      padding: 18px 21px;
+      border: 1px solid #f0dfbb;
+      border-radius: 12px;
+      background: #fff8e9;
+      color: #68491b;
+      font-size: .88rem;
+    }
+
+    .review-callout strong { color: #49320f; }
+
+    .repro-section { background: #edf2ef; }
+
+    .repro-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .repro-card {
+      padding: 28px;
+      border: 1px solid #d5dfd9;
+      border-radius: var(--radius);
+      background: var(--white);
+    }
+
+    .repro-card h3 { margin-bottom: 8px; font-size: 1.12rem; }
+    .repro-card > p { color: var(--muted); font-size: .9rem; }
+
+    pre {
+      overflow-x: auto;
+      margin: 18px 0 0;
+      padding: 17px;
+      border-radius: 10px;
+      background: var(--navy);
+      color: #d5e8dc;
+      font: .78rem/1.8 Consolas, "Courier New", monospace;
+    }
+
+    .doc-links { display: grid; gap: 10px; margin-top: 18px; }
+    .doc-links a { color: var(--green-dark); font-size: .9rem; font-weight: 700; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+    .scope-section { padding-top: 65px; padding-bottom: 65px; background: var(--white); }
+
+    .scope-box {
+      display: grid;
+      grid-template-columns: minmax(0, .75fr) minmax(280px, 1fr);
+      gap: 36px;
+      padding: 30px;
+      border: 1px solid #d9e8dd;
+      border-radius: var(--radius);
+      background: linear-gradient(120deg, #f1f8f2, #fbfcfb);
+    }
+
+    .scope-box h2 { margin-bottom: 8px; font-size: 1.6rem; letter-spacing: -.03em; }
+    .scope-box p { margin-bottom: 0; color: var(--muted); font-size: .9rem; }
+    .scope-box ul { margin: 0; padding-left: 19px; color: #3d5148; font-size: .88rem; }
+    .scope-box li + li { margin-top: 6px; }
+
+    .footer {
+      padding: 28px 0;
+      background: var(--navy);
+      color: #c2cdd4;
+      font-size: .8rem;
+    }
+
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .footer a { color: var(--green); font-weight: 700; text-decoration: none; }
+
+    @media (max-width: 820px) {
+      .nav-links a:not(.button) { display: none; }
+      .hero-grid { grid-template-columns: 1fr; gap: 38px; }
+      .hero-card { max-width: 540px; }
+      .section-heading { grid-template-columns: 1fr; gap: 15px; }
+      .section-heading .eyebrow { grid-column: auto; margin-bottom: 0; }
+      .flow { grid-template-columns: repeat(2, 1fr); }
+      .flow-card:nth-child(2)::after { display: none; }
+      .results-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .wrap { width: min(100% - 30px, 1120px); }
+      .nav { min-height: 68px; }
+      .nav-links { gap: 14px; }
+      .nav-links a:not(.button) { display: none; }
+      .nav-links .button { min-height: 39px; padding-inline: 12px; font-size: .78rem; }
+      .hero { padding: 116px 0 54px; }
+      .hero-grid { gap: 30px; }
+      .hero-copy { font-size: 1rem; }
+      .trust-strip { grid-template-columns: 1fr 1fr; margin-top: 38px; }
+      .trust-item { padding: 14px; }
+      main section { padding: 66px 0; }
+      .problem-grid, .quality-grid, .repro-grid, .chart-grid, .scope-box { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-card { min-height: auto; }
+      .flow-card:not(:last-child)::after { top: auto; right: 50%; bottom: -15px; width: 2px; height: 15px; }
+      .flow-card:nth-child(2)::after { display: block; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .result-card { padding: 16px; }
+      .result-card strong { font-size: 1.35rem; }
+      .review-callout { grid-column: auto; }
+      .scope-box { gap: 18px; padding: 23px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav wrap" aria-label="Main navigation">
+      <a class="brand" href="#top">
+        <span class="brand-mark" aria-hidden="true">PA</span>
+        <span>Patient Access Lakehouse</span>
+      </a>
+      <div class="nav-links">
+        <a href="#problem">The challenge</a>
+        <a href="#approach">Approach</a>
+        <a href="#results">Evidence</a>
+        <a class="button" href="https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse">View source <span aria-hidden="true">↗</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div>
+            <p class="eyebrow">Analytics engineering case study</p>
+            <h1>From fragmented signals to <span>trusted access insights.</span></h1>
+            <p class="hero-copy">
+              A synthetic pharma patient-access lakehouse that brings claims, payer coverage, HUB activity, and specialty
+              pharmacy fills into a tested, dashboard-ready data product.
+            </p>
+            <div class="hero-actions">
+              <a class="button" href="#approach">Explore the solution <span aria-hidden="true">↓</span></a>
+              <a class="button button-outline" href="https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse">Browse the code <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="hero-note">
+              <span class="note-dot" aria-hidden="true"></span>
+              <span>Portfolio demonstration using fictional records only. No real patient or commercial data.</span>
+            </div>
+          </div>
+          <aside class="hero-card" aria-label="Project snapshot">
+            <p class="hero-card-label">Project snapshot · Databricks Free Edition</p>
+            <div class="hero-stat"><strong>4 feeds</strong><span>Claims, formulary,<br>HUB, specialty pharmacy</span></div>
+            <div class="hero-stat"><strong>3 layers</strong><span>Bronze → Silver → Gold</span></div>
+            <div class="hero-stat"><strong>4 tasks</strong><span>One successful<br>orchestrated workflow</span></div>
+            <div class="hero-stat"><strong>7 / 9</strong><span>Checks passed;<br>2 expected review flags</span></div>
+          </aside>
+        </div>
+        <div class="trust-strip" aria-label="Verified demonstration results">
+          <div class="trust-item"><strong>36</strong><span>synthetic access cases</span></div>
+          <div class="trust-item"><strong>24</strong><span>monthly payer-product groups</span></div>
+          <div class="trust-item"><strong>2m 27s</strong><span>verified four-task job run</span></div>
+          <div class="trust-item"><strong>0</strong><span>real PII or PHI used</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="problem-section" id="problem">
+      <div class="wrap">
+        <div class="section-heading">
+          <p class="eyebrow">01 · Problem statement</p>
+          <h2>How can disconnected operational feeds become a dependable analytics view?</h2>
+          <p>
+            Each source describes a different point in an access journey and has its own grain, status codes, and timing.
+            Without explicit definitions and reconciliation, similar-looking counts can tell different stories.
+          </p>
+        </div>
+        <div class="problem-grid">
+          <article class="content-card">
+            <span class="card-label">The data challenge</span>
+            <h3>Multiple systems, different meanings</h3>
+            <p>
+              A claim is a transaction, a HUB row is an event, a formulary row is an effective-dated plan-product interval,
+              and a pharmacy row is a fill. Joining them carelessly can duplicate cases or hide reversals and unmatched records.
+            </p>
+            <div class="source-list" aria-label="Synthetic source feeds">
+              <span class="source-pill">Rx claims</span>
+              <span class="source-pill">Formulary</span>
+              <span class="source-pill">HUB events</span>
+              <span class="source-pill">SP fills</span>
+            </div>
+          </article>
+          <article class="content-card">
+            <span class="card-label">The project goal</span>
+            <h3>Build a traceable, analytics-ready foundation</h3>
+            <p>
+              Create reusable transformations and clear metric definitions, preserve source-level facts, expose quality
+              exceptions, and provide monthly views for reporting—without presenting synthetic results as real-world findings.
+            </p>
+            <div class="source-list" aria-label="Design priorities">
+              <span class="source-pill">Explicit grain</span>
+              <span class="source-pill">Reconciliation</span>
+              <span class="source-pill">Lineage</span>
+              <span class="source-pill">Safe synthetic data</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="approach-section" id="approach">
+      <div class="wrap">
+        <div class="section-heading">
+          <p class="eyebrow">02 · Solution approach</p>
+          <h2>A small lakehouse with clear contracts at every layer.</h2>
+          <p>
+            The local Python/SQLite pipeline is a fast test harness. Separate Databricks notebooks implement the same
+            portfolio flow with Auto Loader, Delta tables, SQL, and a scheduled Job.
+          </p>
+        </div>
+        <div class="flow" aria-label="Bronze Silver Gold data flow">
+          <article class="flow-card">
+            <span class="step">01</span>
+            <h3>Ingest · Bronze</h3>
+            <p>Load the four synthetic CSV feeds incrementally; preserve source values as strings with file and ingest metadata.</p>
+          </article>
+          <article class="flow-card">
+            <span class="step">02</span>
+            <h3>Standardize · Silver</h3>
+            <p>Apply types and validations, deduplicate transaction IDs, and quarantine malformed rows rather than hiding them.</p>
+          </article>
+          <article class="flow-card">
+            <span class="step">03</span>
+            <h3>Model · Gold</h3>
+            <p>Build payer, product, patient-token, and plan-product dimensions alongside transaction, event, and fill facts.</p>
+          </article>
+          <article class="flow-card">
+            <span class="step">04</span>
+            <h3>Measure · Serve</h3>
+            <p>Create a one-row-per-case mart, monthly cohort metrics, quality checks, and dashboard datasets.</p>
+          </article>
+        </div>
+        <div class="grain-note">
+          <span aria-hidden="true">↳</span>
+          <span><strong>Modeling decision:</strong> retain each source fact at its natural grain, then aggregate to a HUB case or enrollment-month / payer / product only where the metric requires it.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-section" id="results">
+      <div class="wrap">
+        <div class="section-heading">
+          <p class="eyebrow">03 · Results & evidence</p>
+          <h2>Verified pipeline outputs—not claims about real patient access.</h2>
+          <p>
+            These counts describe the deterministic demonstration fixture and its successful Free Edition run. They are
+            included to make the workflow reproducible and reviewable.
+          </p>
+        </div>
+        <div class="results-grid">
+          <div class="result-card"><strong>56 → 46</strong><span>Rx rows from Bronze to accepted Silver</span></div>
+          <div class="result-card"><strong>10</strong><span>quarantined Rx rows: 9 duplicates, 1 malformed date</span></div>
+          <div class="result-card"><strong>36</strong><span>case-grain rows in the Gold access mart</span></div>
+          <div class="result-card"><strong>24</strong><span>monthly enrollment × payer × product groups</span></div>
+          <div class="result-card"><strong>7 PASS</strong><span>automated checks with passing outcomes</span></div>
+          <div class="result-card"><strong>2 REVIEW</strong><span>intentional unmatched reversal and SP-fill exceptions</span></div>
+        </div>
+        <div class="chart-grid">
+          <figure class="chart-card">
+            <img src="images/pharma-patient-access-monthly-trend.png" alt="Line chart of synthetic monthly enrolled cases, starts within 30 days, and dispensed cases from January to April 2025." loading="lazy">
+            <figcaption class="chart-caption">Monthly patient-access outcomes<span>Illustrative cohort counts from the generated fixture.</span></figcaption>
+          </figure>
+          <figure class="chart-card">
+            <img src="images/pharma-patient-access-payer-product.png" alt="Bar chart comparing the synthetic 30-day no-start rate for six payer and fictional product combinations." loading="lazy">
+            <figcaption class="chart-caption">30-day no-start rate by payer and product<span>Small synthetic cohorts; not market or access performance.</span></figcaption>
+          </figure>
+          <figure class="chart-card">
+            <img src="images/pharma-patient-access-job-run.png" alt="Cropped Databricks Jobs screenshot showing the successful four-task run: Bronze ingestion, Silver transform, Gold transform, and quality checks." loading="lazy">
+            <figcaption class="chart-caption">Databricks orchestration evidence<span>All four dependent tasks completed successfully in 2 minutes 27 seconds.</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="quality-section" id="quality">
+      <div class="wrap">
+        <div class="section-heading">
+          <p class="eyebrow">04 · Quality & metric rules</p>
+          <h2>Make exceptions visible. Make definitions reviewable.</h2>
+          <p>
+            A dashboard is only as useful as its population, grain, and caveats. Checks persist outcomes and fail the run
+            when a core pipeline invariant is broken.
+          </p>
+        </div>
+        <div class="quality-grid">
+          <article class="quality-card">
+            <h3>Quality controls included</h3>
+            <ul>
+              <li>Source-to-target row reconciliation</li>
+              <li>Duplicate Rx transaction and malformed-row quarantine checks</li>
+              <li>Reversal matching and unmatched specialty-fill review</li>
+              <li>Typed date/status validation and referential checks</li>
+            </ul>
+          </article>
+          <article class="quality-card">
+            <h3>Example business definitions</h3>
+            <ul>
+              <li><strong>Start within 30 days:</strong> first net-paid claim from enrollment through day 30, inclusive.</li>
+              <li><strong>No-start rate (30d):</strong> enrolled cases without that start divided by all enrolled cases.</li>
+              <li><strong>Dispensed case:</strong> at least one synthetic specialty-pharmacy fill.</li>
+            </ul>
+          </article>
+          <div class="review-callout">
+            <strong>Interpretation guardrail:</strong> “No start within 30 days” is a time-window metric, not proof of
+            permanent abandonment. A review flag is an exception to investigate, not a silently discarded row.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="repro-section" id="reproduce">
+      <div class="wrap">
+        <div class="section-heading">
+          <p class="eyebrow">05 · Reproduce & explore</p>
+          <h2>Run it locally. Inspect the Databricks implementation.</h2>
+          <p>
+            The repository includes generator code, transformations, tests, mapping documentation, metric definitions,
+            reusable dashboard SQL, and the four Databricks notebook sources.
+          </p>
+        </div>
+        <div class="repro-grid">
+          <article class="repro-card">
+            <h3>Fast local test harness</h3>
+            <p>Requires Python 3.11+. Generated CSVs and the SQLite database stay in the Git-ignored output folder.</p>
+            <pre><code>python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+python scripts\run_demo.py
+python -m pytest -q</code></pre>
+          </article>
+          <article class="repro-card">
+            <h3>Project documentation</h3>
+            <p>Review the source grains, target models, precise definitions, and the complete implementation.</p>
+            <div class="doc-links">
+              <a href="https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse/blob/main/docs/source_to_target.md">Source-to-target mapping →</a>
+              <a href="https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse/blob/main/docs/metric_glossary.md">Metric glossary →</a>
+              <a href="https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse/tree/main/databricks/notebooks">Databricks notebooks →</a>
+              <a href="https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse">Full source repository →</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="scope-section" id="scope">
+      <div class="wrap">
+        <div class="scope-box">
+          <div>
+            <p class="eyebrow">Scope & responsible use</p>
+            <h2>Fictional data. Transparent limitations.</h2>
+            <p>
+              This is a learning and portfolio project, not a production system or evidence of real patient outcomes.
+              It does not claim regulatory compliance or represent any employer's systems.
+            </p>
+          </div>
+          <ul>
+            <li>All patients, products, payers, claims, and events are generated.</li>
+            <li>No real PII or PHI; synthetic tokens are used for joins.</li>
+            <li>Matching and cohort rules are simplified and documented.</li>
+            <li>The Databricks dashboard remains workspace-restricted; only its screenshots are shown here.</li>
+            <li>Metrics are illustrative, not validated commercial or clinical definitions.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner wrap">
+      <span>Independent analytics engineering portfolio project · Synthetic data only</span>
+      <a href="https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse">View repository on GitHub ↗</a>
+    </div>
+  </footer>
+</body>
+</html>

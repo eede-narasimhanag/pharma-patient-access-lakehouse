@@ -1,5 +1,8 @@
 # Pharma Patient Access & Commercial Analytics Lakehouse
 
+[View the project portfolio case study](https://eede-narasimhanag.github.io/pharma-patient-access-lakehouse/) ·
+[Browse the source repository](https://github.com/eede-narasimhanag/pharma-patient-access-lakehouse)
+
 A reproducible local and Databricks analytics-engineering project that turns fictional Rx claims, payer formulary, HUB,
 and specialty pharmacy source files into quality-checked Silver tables, dimensional Gold facts, and patient-access metrics.
 
